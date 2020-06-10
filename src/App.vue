@@ -1,29 +1,64 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
+    <template v-for="list in lists">
+      <div class="list-container" :key="list.id">
+        <cardList :list="list" @add-card="addCard" />
+      </div>
+    </template>
+    <input type="text" @change="addList" />
   </div>
 </template>
 
 <script lang="ts">
 import { Component, Vue } from "vue-property-decorator";
-import HelloWorld from "./components/HelloWorld.vue";
+import cardList from "@/components/List.vue";
+import { List } from "@/types";
+import { initialLists } from "@/initialData";
+import { AddCardEvent } from "@/components/List.vue";
 
 @Component({
   components: {
-    HelloWorld
+    cardList
   }
 })
-export default class App extends Vue {}
+export default class App extends Vue {
+  lists: List[] = initialLists();
+  listCreatedCount = this.lists.length;
+  cardCreatedCount = this.lists.flatMap(list => list.cards).length;
+
+  addList(event: Event & { currentTarget: HTMLInputElement }): void {
+    const newList = {
+      id: this.listCreatedCount + 1,
+      name: event.currentTarget.value,
+      cards: []
+    };
+
+    this.lists.push(newList);
+    event.currentTarget.value = "";
+    this.listCreatedCount = this.lists.length;
+  }
+
+  addCard({ listId, text }: AddCardEvent): void {
+    const list = this.lists.find(list => list.id === listId);
+    if (list === undefined) {
+      return;
+    }
+
+    const newCard = {
+      id: this.cardCreatedCount + 1,
+      text
+    };
+    list.cards.push(newCard);
+    this.cardCreatedCount =  this.lists.flatMap(list => list.cards).length;
+  }
+}
 </script>
 
-<style lang="scss">
+<style lang="scss" scoped>
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  display: flex;
+  > .list {
+    margin: 1px;
+  }
 }
 </style>
